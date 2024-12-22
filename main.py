@@ -26,3 +26,11 @@ async def root():
 @app.get("/posts")
 def get_posts():
     return {"data": my_posts}
+
+
+@app.post("/posts")
+def create_post(post: Post):
+    post_dict = post.model_dump()
+    post_dict['id'] = randrange(0, 100000000)
+    my_posts.append(post_dict)
+    return {"new_post": post_dict}

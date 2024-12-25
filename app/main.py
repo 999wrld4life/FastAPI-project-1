@@ -129,4 +129,5 @@ def update_post(id: int, updated_post: Post, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id {id} does not exist")
     post_query.update(updated_post.model_dump(), synchronize_session=False)
-    return {"data": updated_post}
+    db.commit()
+    return {"data": post_query.first()}

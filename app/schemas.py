@@ -17,4 +17,4 @@ class Post(BaseModel):
     published: bool
 
     class Config:
-        orm_mode: True
+        from_attributes = True

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from fastapi import FastAPI, Response, status, HTTPException, Depends
 from pydantic import BaseModel
 from random import randrange
@@ -54,11 +54,12 @@ def test_posts(db: Session = Depends(get_db)):
     return {"data": posts}
 
 
-@app.get("/posts")
-def get_posts():
-    cursor.execute("""SELECT * FROM posts """)
-    post = cursor.fetchall()
-    return {"data": post}
+@app.get("/posts", response_model=list[schemas.Post])
+def get_posts(db: Session = Depends(get_db)):
+    # cursor.execute("""SELECT * FROM posts """)
+    # post = cursor.fetchall()
+    posts = db.query(models.Post).all()
+    return posts
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
@@ -78,7 +79,7 @@ def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     return new_post
 
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}", response_model=schemas.Post)
 def get_post(id: int, response: Response, db: Session = Depends(get_db)):
     # cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id)))
 
@@ -89,7 +90,7 @@ def get_post(id: int, response: Response, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id {id} was not found")
 
-    return {"new post": post}
+    return post
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -110,7 +111,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.put("/posts/{id}")
+@app.put("/posts/{id}", response_model=schemas.Post)
 def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
     # cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """,
     #                (post.title, post.content, post.published, str(id)))
@@ -124,4 +125,4 @@ def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends
             status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id {id} does not exist")
     post_query.update(updated_post.model_dump(), synchronize_session=False)
     db.commit()
-    return {"data": post_query.first()}
+    return post_query.first()
